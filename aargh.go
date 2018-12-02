@@ -30,42 +30,48 @@ func New() *App {
 // Reads os.Args and parse command, flags, options and arguments  for our
 // application
 func (app *App) Init() {
-	if len(os.Args) == 1 {
+	// Application Defaults
+	app.CommandActive = "default" // Command
+
+	if len(os.Args) > 1 {
+		app.CommandActive = os.Args[1]
+	}
+
+	if _, ok := app.Commands[app.CommandActive]; !ok {
 		fmt.Println("No command found.")
 		os.Exit(1) // No command
 	}
-
-	// Application Defaults
-	app.CommandActive = os.Args[1] // Command
 
 	// Parse Arguments
 	flags := make(map[string]bool)
 	options := make(map[string]string)
 	var arguments []string
 
-	for _, arg := range os.Args[2:] {
-		// Options
-		if strings.Index(arg, "--") == 0 {
-			if strings.Index(arg, "=") == -1 {
-				fmt.Printf("No value given for option: %s\n", arg)
-				os.Exit(3)
+	if len(os.Args) > 2 {
+		for _, arg := range os.Args[2:] {
+			// Options
+			if strings.Index(arg, "--") == 0 {
+				if strings.Index(arg, "=") == -1 {
+					fmt.Printf("No value given for option: %s\n", arg)
+					os.Exit(3)
+				}
+
+				option := strings.TrimLeft(arg, "--")
+				equals_index := strings.Index(option, "=")
+				key := option[:equals_index]
+				value := option[equals_index+1:]
+
+				options[key] = value
+
+				// Flags
+			} else if strings.Index(arg, "-") == 0 {
+				key := strings.TrimLeft(arg, "-")
+				flags[key] = true
+
+				// Arguments
+			} else {
+				arguments = append(arguments, arg)
 			}
-
-			option := strings.TrimLeft(arg, "--")
-			equals_index := strings.Index(option, "=")
-			key := option[:equals_index]
-			value := option[equals_index+1:]
-
-			options[key] = value
-
-			// Flags
-		} else if strings.Index(arg, "-") == 0 {
-			key := strings.TrimLeft(arg, "-")
-			flags[key] = true
-
-			// Arguments
-		} else {
-			arguments = append(arguments, arg)
 		}
 	}
 
@@ -80,8 +86,10 @@ func (app *App) Run() {
 	app.Init()
 
 	if !app.Call(app.CommandActive) {
-		fmt.Printf("%s. Command not found\n", app.CommandActive)
-		os.Exit(2) // Command not found
+		if !app.Call("default") {
+			fmt.Printf("%s. Command not found\n", app.CommandActive)
+			os.Exit(2) // Command not found
+		}
 	}
 }
 
