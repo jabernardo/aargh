@@ -1,15 +1,16 @@
 package tests
 
 import (
-  "testing"
-  "reflect"
-  ".."
+	"reflect"
+	"testing"
+
+	".."
 )
 
 func TestHello(t *testing.T) {
-  app := aargh.New()
+	app := aargh.New()
 
-  if reflect.TypeOf(app) != reflect.TypeOf(&aargh.App{}) {
-    t.Error("Invalid object")
-  }
+	if reflect.TypeOf(app) != reflect.TypeOf(&aargh.App{}) {
+		t.Error("Invalid object")
+	}
 }
