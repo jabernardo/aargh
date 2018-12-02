@@ -11,7 +11,7 @@ import (
 type App struct {
 	Name    string // Application Name
 	Version string // Application Version
-	Author  string // Application Authow
+	Author  string // Application Author
 
 	CommandActive string              // Active Command
 	Commands      map[string]callback // Commands available
@@ -114,4 +114,37 @@ func (app *App) Command(name string, fn callback) {
 	command_existing[name] = fn
 
 	app.Commands = command_existing
+}
+
+// Has Flag
+// Check if name is flagged upon running the application
+// Returns bool
+func (app *App) HasFlag(name string) bool {
+	if app.Flags[name] {
+		return true
+	}
+
+	return false
+}
+
+// Has Option
+// Check if option is declared upon running
+// Returns bool
+func (app *App) HasOption(name string) bool {
+	if _, ok := app.Options[name]; ok {
+		return true
+	}
+
+	return false
+}
+
+// Get Option
+// Get option value upon running application
+// Returns empty string if option wasn't declared
+func (app *App) GetOption(name string) string {
+	if option, ok := app.Options[name]; ok {
+		return option
+	}
+
+	return ""
 }
