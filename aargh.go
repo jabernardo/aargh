@@ -96,7 +96,7 @@ func (app *App) Run() {
 // Call command
 // Returns `true` if the callback was executed else `false`
 func (app *App) Call(name string) bool {
-	if command, ok := app.Commands[app.CommandActive]; ok {
+	if command, ok := app.Commands[name]; ok {
 		if reflect.TypeOf(command).Kind() != reflect.Func {
 			os.Exit(3) // Invalid callback
 		}
