@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	".."
+	"github.com/jabernardo/aargh"
 )
 
 func main() {
