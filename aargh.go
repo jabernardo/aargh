@@ -1,7 +1,7 @@
 package aargh
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"reflect"
 	"strings"
@@ -38,8 +38,7 @@ func (app *App) Init() {
 	}
 
 	if _, ok := app.Commands[app.CommandActive]; !ok {
-		fmt.Println("No command found.")
-		os.Exit(1) // No command
+		log.Fatalln("No command found.")
 	}
 
 	// Parse Arguments
@@ -52,8 +51,7 @@ func (app *App) Init() {
 			// Options
 			if strings.Index(arg, "--") == 0 {
 				if strings.Index(arg, "=") == -1 {
-					fmt.Printf("No value given for option: %s\n", arg)
-					os.Exit(3)
+					log.Fatalf("No value given for option: %s\n", arg)
 				}
 
 				option := strings.TrimLeft(arg, "--")
@@ -87,8 +85,7 @@ func (app *App) Run() {
 
 	if !app.Call(app.CommandActive) {
 		if !app.Call("default") {
-			fmt.Printf("%s. Command not found\n", app.CommandActive)
-			os.Exit(2) // Command not found
+			log.Fatalf("%s. Command not found\n", app.CommandActive)
 		}
 	}
 }
@@ -98,7 +95,7 @@ func (app *App) Run() {
 func (app *App) Call(name string) bool {
 	if command, ok := app.Commands[name]; ok {
 		if reflect.TypeOf(command).Kind() != reflect.Func {
-			os.Exit(3) // Invalid callback
+			log.Fatalf("Command [%s] is an invalid callback.\n", name)
 		}
 
 		command(app)
