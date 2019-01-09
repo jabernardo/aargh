@@ -23,6 +23,8 @@ type App struct {
 
 // Create new instance
 func New() *App {
+	log.SetFlags(0)
+
 	return &App{}
 }
 
@@ -50,19 +52,32 @@ func (app *App) Init() {
 		for _, arg := range os.Args[2:] {
 			// Options
 			if strings.Index(arg, "--") == 0 {
-				if strings.Index(arg, "=") == -1 {
-					log.Fatalf("No value given for option: %s\n", arg)
+				if len(arg) == 2 {
+					log.Fatalln("No given option.")
 				}
 
 				option := strings.TrimLeft(arg, "--")
+
+				if strings.Index(arg, "=") == -1 {
+					log.Fatalf("No value given for option: %s\n", option)
+				}
+
 				equals_index := strings.Index(option, "=")
 				key := option[:equals_index]
 				value := option[equals_index+1:]
+
+				if len(value) == 0 {
+					log.Fatalf("No value given for option: %s\n", key)
+				}
 
 				options[key] = value
 
 				// Flags
 			} else if strings.Index(arg, "-") == 0 {
+				if len(arg) == 1 {
+					log.Fatalln("No given flag.")
+				}
+
 				key := strings.TrimLeft(arg, "-")
 				flags[key] = true
 
