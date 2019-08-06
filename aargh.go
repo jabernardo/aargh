@@ -227,15 +227,16 @@ func (app *App) HasOption(name string) bool {
 // 
 // Arguments:
 //  - name (string) Option
+//  - default_value (string) Default value
 //
 // Returns:
 //  - (string) Option value
-func (app *App) GetOption(name string) string {
+func (app *App) GetOption(name string, default_value ...string) string {
 	if option, ok := app.Options[name]; ok {
 		return option
 	}
 
-	return ""
+	return strings.Join(default_value, "")
 }
 
 // (*App).HandleError - Handle error messages

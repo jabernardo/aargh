@@ -14,12 +14,8 @@ func main() {
 	// go run main.go hello
 	// go run main.go hello --name="Your Name"
 	app.Command("hello", func(app *aargh.App) {
-		name := "User"
-
-		// Set visitor name
-		if app.HasOption("name") {
-			name = app.GetOption("name")
-		}
+		// Set visitor name (and set default value `User`)
+		name := app.GetOption("name", "User")
 
 		// Quiet!!!
 		if app.HasFlag("q") {
