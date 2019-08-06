@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	".."
+	aargh "github.com/jabernardo/aargh"
 )
 
 func TestHello(t *testing.T) {
