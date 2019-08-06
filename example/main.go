@@ -42,5 +42,8 @@ func main() {
 	})
 
 	// Run application
-	app.Run()
+	// > Turned-off console logging
+	if err := app.Run(false); err != nil {
+		fmt.Println(err)
+	}
 }

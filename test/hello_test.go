@@ -19,7 +19,7 @@ func TestHello(t *testing.T) {
 		fmt.Println("Hello World")
 	})
 
-	if !app.Call("default") {
+	if err := app.Call("default"); err != nil {
 		t.Error("No callback registered")
 	}
 }

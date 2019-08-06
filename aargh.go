@@ -1,37 +1,70 @@
 package aargh
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"reflect"
 	"strings"
+	"errors"
 )
+
+// Error Code and Messages
+var ERROR = map[int]string {
+	100: "No command found.",
+	101: "No given option.",
+	102: "No value given for option: %s",
+	103: "No given flag.",
+	104: "%s. Command not found",
+}
 
 // aargh.App Structure
 type App struct {
-	Name    string // Application Name
-	Version string // Application Version
-	Author  string // Application Author
+	// Application Name
+	Name string
 
-	CommandActive string              // Active Command
-	Commands      map[string]callback // Commands available
+	// Application Version
+	Version string
 
-	Flags     map[string]bool   // Flags mapped throught command-line arguments (-f)
-	Options   map[string]string // key=value options mapped
-	Arguments []string          // Extra arguments
+	// Application Author
+	Author string
+
+	// Active Command
+	CommandActive string
+
+	// Commands available
+	Commands map[string]callback
+
+	// Flags mapped throught command-line arguments (-f)
+	Flags map[string]bool
+
+	// key=value options mapped
+	Options map[string]string
+
+	// Extra arguments
+	Arguments []string
+
+	// Console Logging
+	ConsoleLogging bool
 }
 
-// Create new instance
+// Create new instance of (*Aargh) App
+//
+// Returns:
+//  - (*App) New *Aargh.App{}
 func New() *App {
 	log.SetFlags(0)
 
 	return &App{}
 }
 
-// Initialize Application
+// (*App).Init() -  Initialize Application
 // Reads os.Args and parse command, flags, options and arguments  for our
 // application
-func (app *App) Init() {
+//
+// Returns:
+//  - (error) error
+func (app *App) Init() error {
 	// Application Defaults
 	app.CommandActive = "default" // Command
 
@@ -40,7 +73,7 @@ func (app *App) Init() {
 	}
 
 	if _, ok := app.Commands[app.CommandActive]; !ok {
-		log.Fatalln("No command found.")
+		return app.HandleError(100)
 	}
 
 	// Parse Arguments
@@ -53,13 +86,13 @@ func (app *App) Init() {
 			// Options
 			if strings.Index(arg, "--") == 0 {
 				if len(arg) == 2 {
-					log.Fatalln("No given option.")
+					return app.HandleError(101)
 				}
 
 				option := strings.TrimLeft(arg, "--")
 
 				if strings.Index(arg, "=") == -1 {
-					log.Fatalf("No value given for option: %s\n", option)
+					return app.HandleError(102, option)
 				}
 
 				equals_index := strings.Index(option, "=")
@@ -67,7 +100,7 @@ func (app *App) Init() {
 				value := option[equals_index+1:]
 
 				if len(value) == 0 {
-					log.Fatalf("No value given for option: %s\n", key)
+					return app.HandleError(102, key)
 				}
 
 				options[key] = value
@@ -75,7 +108,7 @@ func (app *App) Init() {
 				// Flags
 			} else if strings.Index(arg, "-") == 0 {
 				if len(arg) == 1 {
-					log.Fatalln("No given flag.")
+					return app.HandleError(103)
 				}
 
 				key := strings.TrimLeft(arg, "-")
@@ -91,39 +124,63 @@ func (app *App) Init() {
 	app.Flags = flags
 	app.Options = options
 	app.Arguments = arguments
+
+	return nil
 }
 
-// Run Application
+// (*App).Run - Run Application
 // Executes command from command map
-func (app *App) Run() {
-	app.Init()
+//
+// Arguments:
+//  - logging (bool) Console logging?
+//
+// Returns:
+//  - (error) error
+func (app *App) Run(logging bool) error {
+	// Set logging option
+	app.ConsoleLogging = logging
 
-	if !app.Call(app.CommandActive) {
-		if !app.Call("default") {
-			log.Fatalf("%s. Command not found\n", app.CommandActive)
+	if err := app.Init(); err != nil {
+		return err
+	}
+
+	if err := app.Call(app.CommandActive); err != nil {
+		if errd := app.Call("default"); errd != nil  {
+			return err
 		}
 	}
+
+	return nil
 }
 
-// Call command
-// Returns `true` if the callback was executed else `false`
-func (app *App) Call(name string) bool {
+// (*App).Call - Call command function
+//
+// Arguments:
+//  - name (string) Command name
+//
+// Returns:
+//  -  (error) If the callback was not executed
+func (app *App) Call(name string) error {
+	err_msg := app.GetError(104, name)
+
 	if command, ok := app.Commands[name]; ok {
 		if reflect.TypeOf(command).Kind() != reflect.Func {
-			log.Fatalf("Command [%s] is an invalid callback.\n", name)
+			return errors.New(err_msg)
 		}
 
 		command(app)
 
-		return true
+		return nil
 	}
 
-	return false
+	return errors.New(err_msg)
 }
 
-// Register Command
-// First parameter is the command name
-// Second parameter is callback function
+// (*App).Register - Add/register new command to application
+//
+// Arguments:
+//  - name (string) Command name
+//  - fn (callback) Function
 func (app *App) Command(name string, fn callback) {
 	command_existing := make(map[string]callback)
 
@@ -136,9 +193,13 @@ func (app *App) Command(name string, fn callback) {
 	app.Commands = command_existing
 }
 
-// Has Flag
-// Check if name is flagged upon running the application
-// Returns bool
+// (*App).HasFlag - Check if name is flagged upon running the application
+// 
+// Arguments:
+//  - name (string) Flag name
+//
+// Returns:
+//  - (bool)
 func (app *App) HasFlag(name string) bool {
 	if app.Flags[name] {
 		return true
@@ -147,9 +208,13 @@ func (app *App) HasFlag(name string) bool {
 	return false
 }
 
-// Has Option
-// Check if option is declared upon running
-// Returns bool
+// (*App).HasOption - Check if option is passed upon running the application
+// 
+// Arguments:
+//  - name (string) Option name
+//
+// Returns:
+//  - (bool)
 func (app *App) HasOption(name string) bool {
 	if _, ok := app.Options[name]; ok {
 		return true
@@ -158,13 +223,59 @@ func (app *App) HasOption(name string) bool {
 	return false
 }
 
-// Get Option
-// Get option value upon running application
-// Returns empty string if option wasn't declared
+// (*App).GetOption - Get Option value
+// 
+// Arguments:
+//  - name (string) Option
+//
+// Returns:
+//  - (string) Option value
 func (app *App) GetOption(name string) string {
 	if option, ok := app.Options[name]; ok {
 		return option
 	}
 
 	return ""
+}
+
+// (*App).HandleError - Handle error messages
+//
+// Arguments:
+//  - code (int) Error code
+//  - args (interface) Interface
+//
+// Returns:
+//  - (error) Error Message
+func (app *App) HandleError(code int, args ...interface{}) error {
+	err_msg := app.GetError(code, args...)
+
+	if app.ConsoleLogging {
+		log.Fatalln(err_msg)
+	}
+
+	return errors.New(err_msg)
+}
+
+// (*App).GetError - Get error message from `Error`
+//
+// Arguments:
+//  - code (int) Error code
+//  - args (interface) Interface
+//
+// Returns:
+//  - (string) Error Message
+func (app *App) GetError(code int, args ...interface{}) string {
+	err_msg := ""
+
+	if _, ok := ERROR[code]; !ok {
+		return err_msg
+	}
+
+	if len(args) > 0 {
+		err_msg = fmt.Sprintf(ERROR[code], args...)
+	} else {
+		err_msg = ERROR[code]
+	}
+
+	return err_msg
 }
