@@ -77,42 +77,44 @@ func (app *App) init() error {
 	var arguments []string
 
 	if len(os.Args) > index_start {
-		for _, arg := range os.Args[index_start:] {
-			// Options
-			if strings.Index(arg, "--") == 0 {
-				if len(arg) == 2 {
-					return app.handleError(101)
-				}
+		return nil
+	}
 
-				option := strings.TrimLeft(arg, "--")
-
-				if strings.Index(arg, "=") == -1 {
-					return app.handleError(102, option)
-				}
-
-				equals_index := strings.Index(option, "=")
-				key := option[:equals_index]
-				value := option[equals_index+1:]
-
-				if len(value) == 0 {
-					return app.handleError(102, key)
-				}
-
-				options[key] = value
-
-				// Flags
-			} else if strings.Index(arg, "-") == 0 {
-				if len(arg) == 1 {
-					return app.handleError(103)
-				}
-
-				key := strings.TrimLeft(arg, "-")
-				flags[key] = true
-
-				// Arguments
-			} else {
-				arguments = append(arguments, arg)
+	for _, arg := range os.Args[index_start:] {
+		// Options
+		if strings.Index(arg, "--") == 0 {
+			if len(arg) == 2 {
+				return app.handleError(101)
 			}
+
+			option := strings.TrimLeft(arg, "--")
+
+			if strings.Index(arg, "=") == -1 {
+				return app.handleError(102, option)
+			}
+
+			equals_index := strings.Index(option, "=")
+			key := option[:equals_index]
+			value := option[equals_index+1:]
+
+			if len(value) == 0 {
+				return app.handleError(102, key)
+			}
+
+			options[key] = value
+
+			// Flags
+		} else if strings.Index(arg, "-") == 0 {
+			if len(arg) == 1 {
+				return app.handleError(103)
+			}
+
+			key := strings.TrimLeft(arg, "-")
+			flags[key] = true
+
+			// Arguments
+		} else {
+			arguments = append(arguments, arg)
 		}
 	}
 
