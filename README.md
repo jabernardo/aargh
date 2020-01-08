@@ -48,6 +48,7 @@ func main() {
 }
 
 ```
+[![Run on Repl.it](https://repl.it/badge/github/jabernardo/aargh)](https://repl.it/github/jabernardo/aargh)
 
 ## Test it out!
 ```sh
