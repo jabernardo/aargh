@@ -76,7 +76,7 @@ func (app *App) init() error {
 	options := make(map[string]string)
 	var arguments []string
 
-	if len(os.Args) > index_start {
+	if len(os.Args) < index_start {
 		return nil
 	}
 
